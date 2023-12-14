@@ -77,9 +77,12 @@ check_pid() {
 check_new_ver() {
     aria2_new_ver=$(
         {
-            wget -t2 -T3 -qO- "https://api.github.com/repos/P3TERX/Aria2-Pro-Core/releases/latest" ||
-                wget -t2 -T3 -qO- "https://gh-api.p3terx.com/repos/P3TERX/Aria2-Pro-Core/releases/latest"
+            wget -t2 -T3 -qO- "https://api.github.com/repos/abcfy2/aria2-static-build/releases/latest"
         } | grep -o '"tag_name": ".*"' | head -n 1 | cut -d'"' -f4
+#        {
+#            wget -t2 -T3 -qO- "https://api.github.com/repos/P3TERX/Aria2-Pro-Core/releases/latest" ||
+#                wget -t2 -T3 -qO- "https://gh-api.p3terx.com/repos/P3TERX/Aria2-Pro-Core/releases/latest"
+#        } | grep -o '"tag_name": ".*"' | head -n 1 | cut -d'"' -f4
     )
     if [[ -z ${aria2_new_ver} ]]; then
         echo -e "${Error} Aria2 最新版本获取失败，请手动获取最新版本号[ https://github.com/P3TERX/Aria2-Pro-Core/releases ]"
@@ -116,16 +119,20 @@ Download_aria2() {
         echo -e "${Info} 删除旧版 Aria2 二进制文件..."
         rm -vf $(which aria2c)
     done
-    DOWNLOAD_URL="https://github.com/P3TERX/Aria2-Pro-Core/releases/download/${aria2_new_ver}/aria2-${aria2_new_ver%_*}-static-linux-${ARCH}.tar.gz"
+    # DOWNLOAD_URL="https://github.com/P3TERX/Aria2-Pro-Core/releases/download/${aria2_new_ver}/aria2-${aria2_new_ver%_*}-static-linux-${ARCH}.tar.gz"
+    DOWNLOAD_URL="https://github.com/abcfy2/aria2-static-build/releases/download/${aria2_new_ver}/aria2-x86_64-linux-musl_libressl_static.zip"
     {
-        wget -t2 -T3 -O- "${DOWNLOAD_URL}" ||
-            wget -t2 -T3 -O- "https://gh-acc.p3terx.com/${DOWNLOAD_URL}"
-    } | tar -zx
+        wget -t2 -T3 -O aria2_temp.zip "${DOWNLOAD_URL}"
+    } && unzip aria2_temp.zip && rm aria2_temp.zip
+    cd aria2-${aria2_new_ver}-aarch64-linux-android-build1
     [[ ! -s "aria2c" ]] && echo -e "${Error} Aria2 下载失败 !" && exit 1
+    
     [[ ${update_dl} = "update" ]] && rm -f "${aria2c}"
     mv -f aria2c "${aria2c}"
     [[ ! -e ${aria2c} ]] && echo -e "${Error} Aria2 主程序安装失败！" && exit 1
+    
     chmod +x ${aria2c}
+    cd .. && rm -R ./aria2-${aria2_new_ver}-aarch64-linux-android-build1
     echo -e "${Info} Aria2 主程序安装完成！"
 }
 Download_aria2_conf() {
@@ -657,7 +664,7 @@ Set_iptables() {
     fi
 }
 Update_Shell() {
-    sh_new_ver=$(wget -qO- -t1 -T3 "https://raw.githubusercontent.com/P3TERX/aria2.sh/master/aria2.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1) && sh_new_type="github"
+    sh_new_ver=$(wget -qO- -t1 -T3 "https://raw.githubusercontent.com/JarmoHu/aria2.sh/master/aria2.sh" | grep 'sh_ver="' | awk -F "=" '{print $NF}' | sed 's/\"//g' | head -1) && sh_new_type="github"
     [[ -z ${sh_new_ver} ]] && echo -e "${Error} 无法链接到 Github !" && exit 0
     if [[ -e "/etc/init.d/aria2" ]]; then
         rm -rf /etc/init.d/aria2
@@ -667,7 +674,7 @@ Update_Shell() {
     if [[ -n $(crontab_update_status) ]]; then
         crontab_update_stop
     fi
-    wget -N "https://raw.githubusercontent.com/P3TERX/aria2.sh/master/aria2.sh" && chmod +x aria2.sh
+    wget -N "https://raw.githubusercontent.com/JarmoHu/aria2.sh/master/aria2.sh" && chmod +x aria2.sh
     echo -e "脚本已更新为最新版本[ ${sh_new_ver} ] !(注意：因为更新方式为直接覆盖当前运行的脚本，所以可能下面会提示一些报错，无视即可)" && exit 0
 }
 
